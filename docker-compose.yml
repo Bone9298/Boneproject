@@ -1,0 +1,67 @@
+name: fb-bot
+
+services:
+  # MariaDB 資料庫
+  db:
+    image: mariadb:10.11
+    container_name: fb-bot-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password_change_me}
+      MYSQL_DATABASE: fb_products
+      MYSQL_USER: fb_user
+      MYSQL_PASSWORD: 9298
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask API
+  api:
+    build: ./backend
+    container_name: fb-bot-api
+    restart: always
+    environment:
+      DATABASE_URL: mysql+pymysql://fb_user:9298@db:3306/fb_products?charset=utf8mb4
+      FLASK_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api/products')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx (前端 + 反向代理)
+  nginx:
+    image: nginx:alpine
+    container_name: fb-bot-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

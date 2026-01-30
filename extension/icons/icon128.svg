@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#1877F2" rx="24"/>
+  <text x="64" y="75" font-family="Arial" font-size="64" fill="white" text-anchor="middle" font-weight="bold">💬</text>
+  <circle cx="100" cy="28" r="18" fill="#FF6B35"/>
+  <text x="100" y="35" font-family="Arial" font-size="16" fill="white" text-anchor="middle" font-weight="bold">FB</text>
+</svg>

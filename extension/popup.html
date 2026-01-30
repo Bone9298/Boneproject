@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB 商品批量留言</title>
+    <style>
+        body {
+            width: 350px;
+            padding: 20px;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            margin: 0 0 15px 0;
+            text-align: center;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .info-value {
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            background: #4CAF50;
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .log-item {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+
+        .log-item.success {
+            color: #4CAF50;
+        }
+
+        .log-item.error {
+            color: #ff6b6b;
+        }
+
+        /* 分店選擇器樣式 */
+        .branch-selector {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+        }
+
+        .branch-selector label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .branch-selector select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .branch-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 3px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚀 FB 批量留言助手</h1>
+
+    <!-- 分店選擇器 -->
+    <div class="branch-selector">
+        <label for="branchSelect">🏪 您的分店：</label>
+        <select id="branchSelect">
+            <option value="">全部分店</option>
+            <option value="大寮">大寮</option>
+            <option value="瑞光">瑞光</option>
+            <option value="公裕街">公裕街</option>
+            <option value="內埔">內埔</option>
+        </select>
+    </div>
+
+    <div class="status">
+        <div class="info-item">
+            <span class="info-label">已勾選商品：</span>
+            <span class="info-value" id="selectedCount">0</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">當前頁面：</span>
+            <span class="info-value" id="currentPage">檢測中...</span>
+        </div>
+    </div>
+
+    <div class="warning" id="warning" style="display: none;">
+        ⚠️ 請先在 FB 打開要留言的貼文！
+    </div>
+
+    <div class="progress" id="progress">
+        <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn" disabled>
+        開始批量留言
+    </button>
+
+    <button class="btn btn-danger" id="stopBtn" style="display: none;">
+        ⏹ 停止留言
+    </button>
+
+    <button class="btn btn-secondary" id="refreshBtn">
+        🔄 重新載入商品
+    </button>
+
+    <div class="log" id="log"></div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

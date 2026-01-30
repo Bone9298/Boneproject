@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB 現貨出清機器人 - 商品管理系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="force_layout.css">
+    <script src="api-client.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🛍️ FB 現貨出清機器人</h1>
+                <p class="subtitle">商品管理系統</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <span class="stat-label">總商品數</span>
+                    <span class="stat-value" id="totalProducts">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">待處理</span>
+                    <span class="stat-value pending" id="pendingProducts">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">已選擇</span>
+                    <span class="stat-value selected" id="selectedProducts">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar - Add Product Form -->
+            <aside class="sidebar">
+                <div class="form-container">
+                    <h2>
+                        <span id="formTitle">新增商品</span>
+                    </h2>
+
+                    <form id="productForm">
+                        <input type="hidden" id="editProductId">
+
+                        <div class="form-group">
+                            <label for="productName">商品名稱 *</label>
+                            <input type="text" id="productName" placeholder="例：黑金剛花生" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productSpecs">規格 *</label>
+                            <input type="text" id="productSpecs" placeholder="例：300g/包" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productPrice">金額 *</label>
+                            <input type="text" id="productPrice" placeholder="例：$29" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productQuantity">庫存數量 *</label>
+                            <input type="text" id="productQuantity" placeholder="例：1 個、2 組、5 箱" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productCategory">🌡️ 分類 *</label>
+                            <select id="productCategory">
+                                <option value="1">🌡️ 常溫</option>
+                                <option value="2">❄️ 冷凍</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productBranch">🏢 分店 *</label>
+                            <select id="productBranch">
+                                <option value="大寮">🏢 大寮</option>
+                                <option value="瑞光">🏢 瑞光</option>
+                                <option value="公裕街">🏢 公裕街</option>
+                                <option value="內埔">🏢 內埔</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="productPriority" class="priority-checkbox">
+                                <span>⭐ 優先發布（即期商品）</span>
+                                <small>勾選後此商品將優先發布到 FB（最多5個）</small>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productImage">商品圖片</label>
+                            <div class="image-upload-area" id="imageUploadArea" tabindex="0">
+                                <input type="file" id="productImage" accept="image/*" hidden>
+                                <div class="upload-placeholder" id="uploadPlaceholder">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <polyline points="21 15 16 10 5 21" />
+                                    </svg>
+                                    <p>點擊上傳圖片</p>
+                                    <span>或按 Ctrl+V 貼上圖片</span>
+                                </div>
+                                <img id="imagePreview" class="image-preview" style="display: none;">
+                                <button type="button" class="remove-image-btn" id="removeImageBtn"
+                                    style="display: none;">✕</button>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span>💾 儲存商品</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn" style="display: none;">
+                                <span>✕ 取消編輯</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Main Area - Product List -->
+            <main class="content-area">
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="normal">
+                        📦 商品目錄
+                        <span class="tab-count" id="normalCount">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="pending">
+                        ⏳ 待處理訂單
+                        <span class="tab-count" id="pendingCount">0</span>
+                    </button>
+                </div>
+
+                <!-- Search & Actions Bar -->
+                <div class="actions-bar">
+                    <div class="filters-section">
+                        <div class="search-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                            <input type="text" id="searchInput" placeholder="搜尋商品名稱...">
+                        </div>
+
+                        <div class="category-filter">
+                            <button class="filter-btn active" data-category="0">📦 全部</button>
+                            <button class="filter-btn" data-category="1">🌡️ 常溫</button>
+                            <button class="filter-btn" data-category="2">❄️ 冷凍</button>
+                        </div>
+
+                        <div class="branch-filter-dropdown">
+                            <label for="branchFilterSelect">🏢</label>
+                            <select id="branchFilterSelect" class="branch-filter-select">
+                                <option value="all">全部分店</option>
+                                <option value="大寮">大寮</option>
+                                <option value="瑞光">瑞光</option>
+                                <option value="公裕街">公裕街</option>
+                                <option value="內埔">內埔</option>
+                            </select>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-outline" id="selectAllBtn">
+                                <span>☑️ 全選</span>
+                            </button>
+
+                            <button class="btn btn-outline" id="deselectAllBtn">
+                                <span>◻️ 取消全選</span>
+                            </button>
+
+                            <button class="btn btn-success" id="publishBtn" disabled>
+                                <span>🚀 發布到 FB</span>
+                                <span class="badge" id="publishCount">0</span>
+                            </button>
+
+                            <button class="btn btn-warning" id="batchReturnBtn" style="display: none;">
+                                <span>↩️ 退回商品目錄</span>
+                                <span class="badge" id="batchReturnCount">0</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <div class="products-grid" id="productsGrid">
+                        <!-- Products will be rendered here -->
+                        <div class="empty-state" id="emptyState">
+                            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1">
+                                <circle cx="9" cy="21" r="1" />
+                                <circle cx="20" cy="21" r="1" />
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                            </svg>
+                            <h3>還沒有商品</h3>
+                            <p>請在左側表單新增您的第一個商品</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="pagination-controls" id="paginationControls" style="display: none;">
+                        <!-- Pagination buttons will be rendered here -->
+                    </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="progress-modal" id="progressModal">
+        <div class="progress-modal-content">
+            <h3 id="progressTitle">正在處理中...</h3>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">準備中...</p>
+            <p class="progress-count" id="progressCount">0 / 0</p>
+            <div class="progress-warning">
+                ⚠️ 請勿關閉此視窗，處理中...
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="api-client.js?v=11"></script>
+    <script src="app.js?v=11"></script>
+
+    <script>
+        // Paste and remove image functionality
+        window.addEventListener('load', function () {
+            console.log('Init paste handler');
+
+            // Remove button handler
+            var removeBtn = document.getElementById('removeImageBtn');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    document.getElementById('imagePreview').src = '';
+                    document.getElementById('imagePreview').style.display = 'none';
+                    document.getElementById('uploadPlaceholder').style.display = 'flex';
+                    document.getElementById('removeImageBtn').style.display = 'none';
+                    document.getElementById('productImage').value = '';
+                });
+            }
+
+            // Paste handler
+            document.addEventListener('paste', function (e) {
+                if (!e.clipboardData || !e.clipboardData.items) return;
+
+                for (var i = 0; i < e.clipboardData.items.length; i++) {
+                    if (e.clipboardData.items[i].type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        var blob = e.clipboardData.items[i].getAsFile();
+                        var reader = new FileReader();
+                        reader.onload = function (event) {
+                            document.getElementById('imagePreview').src = event.target.result;
+                            document.getElementById('imagePreview').style.display = 'block';
+                            document.getElementById('uploadPlaceholder').style.display = 'none';
+                            document.getElementById('removeImageBtn').style.display = 'flex';
+                            if (window.productManager) productManager.showToast('已貼上圖片', 'success');
+                        };
+                        reader.readAsDataURL(blob);
+                        break;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

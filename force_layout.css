@@ -1,0 +1,8 @@
+/* Force Grid Layout */
+#productsGrid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 16px !important;
+    padding: 16px !important;
+    width: 100%;
+}

@@ -1,0 +1,38 @@
+{
+    "manifest_version": 3,
+    "name": "FB 商品批量留言助手",
+    "version": "2.0.0",
+    "description": "自動在 Facebook 貼文下方批量留言展示商品",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://www.facebook.com/*",
+        "https://m.facebook.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://*/*",
+        "http://*/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "options_page": "options.html",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.facebook.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    }
+}
