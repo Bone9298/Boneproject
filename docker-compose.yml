@@ -13,11 +13,11 @@ services:
       MYSQL_PASSWORD: 9298
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backend/init_db_full.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,7 +36,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api/products')"]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api/products')" ]
       interval: 30s
       timeout: 10s
       retries: 3
