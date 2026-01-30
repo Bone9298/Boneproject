@@ -5,10 +5,11 @@ class APIClient {
     constructor(baseURL) {
         // 自動偵測環境
         if (!baseURL) {
-            // 如果是透過 nginx (Docker 或生產環境)，則使用相對路徑
-            // 如果是本地開發 (port 8000)，則使用完整 URL
-            const isDocker = window.location.port === '80' || window.location.port === '';
-            baseURL = isDocker ? '/api' : 'http://localhost:5000/api';
+            // 只有本地開發 (port 8000) 使用完整 URL
+            // 其他環境（Docker port 80、伺服器 port 7000 等）都用相對路徑
+            const port = window.location.port;
+            const isLocalDev = port === '8000';
+            baseURL = isLocalDev ? 'http://localhost:5000/api' : '/api';
         }
         this.baseURL = baseURL;
         console.log('API Client initialized with baseURL:', this.baseURL);
